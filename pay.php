@@ -1,32 +1,46 @@
 <?php
-// Enable error display (testing). Production में बंद करें।
+// Enable error display (testing). Turn off in production.
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-// SMEPay API endpoint (as per documentation)
-$baseUrl = "https://typof.co/smepay/checkout-v2.js";  // यह endpoint documentation के अनुसार हो सकता है
+require_once __DIR__ . '/config.php';
 
-$api_key = "8bd912b6FA1569DE";
-$secret_key = "e01e3651278e9f4362b58bb6691c1f19ec3f7496e266c6e42c6651d4266732a6";
+// Use config values
+$baseUrl = rtrim($SMEPAY_BASE_URL, '/');
+$api_key = $SMEPAY_API_KEY;
+$secret_key = $SMEPAY_SECRET_KEY;
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
     die("Invalid access");
 }
 
-$order_id = $_POST['order_id'];
-$amount = $_POST['amount'];
+// Basic sanitization and validation
+$order_id = isset($_POST['order_id']) ? preg_replace('/[^a-zA-Z0-9-_]/', '', $_POST['order_id']) : null;
+$amount = isset($_POST['amount']) ? (int) $_POST['amount'] : 0;
+$customer_name = isset($_POST['customer_name']) ? trim($_POST['customer_name']) : '';
+$customer_email = isset($_POST['customer_email']) ? filter_var($_POST['customer_email'], FILTER_VALIDATE_EMAIL) : false;
 
-// Prepare payload as per API documentation
+if (!$order_id || $amount <= 0 || !$customer_email) {
+    die("Missing or invalid input data");
+}
+
+// Build the redirect URL back to our site after payment completes
+$scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+$host = $_SERVER['HTTP_HOST'];
+$basePath = rtrim(dirname($_SERVER['REQUEST_URI']), '/\\');
+$redirect_url = $scheme . '://' . $host . $basePath . '/payment-success.php';
+
+// Prepare payload as per API documentation (adjust fields to match your provider)
 $payload = [
     "order_id" => $order_id,
     "amount" => $amount,
     "currency" => "INR",
-    // यहाँ callback/redirect URL डालें जहाँ payment complete होने पर user वापस आएगा
-    "redirect_url" => "https://yourdomain.com/callback.php"
+    "customer_name" => $customer_name,
+    "customer_email" => $customer_email,
+    "redirect_url" => $redirect_url
 ];
 
-// Generate signature if required (depends on API spec)
-// मान लीजिए documentation कहती है कि आपको signature header में भेजना है:
 $payload_json = json_encode($payload);
 
 // Example: signature = HMAC_SHA256(secret_key, payload_json)
@@ -41,7 +55,8 @@ $headers = [
 
 // Initialize cURL
 $ch = curl_init();
-curl_setopt($ch, CURLOPT_URL, $baseUrl . "/payment/create");  // यहाँ path documentation अनुसार बदल सकती है
+// NOTE: This path is an assumption; update to match SMEPay's API docs if different.
+curl_setopt($ch, CURLOPT_URL, $baseUrl . "/api/v1/payment/create");
 curl_setopt($ch, CURLOPT_POST, true);
 curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
 curl_setopt($ch, CURLOPT_POSTFIELDS, $payload_json);
@@ -49,16 +64,17 @@ curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
 $response = curl_exec($ch);
 $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+$curl_err = curl_error($ch);
 curl_close($ch);
 
 if ($response === false) {
-    die("Error connecting to SMEPay API");
+    die("Error connecting to SMEPay API: " . htmlspecialchars($curl_err));
 }
 
 $result = json_decode($response, true);
 
-// Debug: आप यहाँ response देख सकते हैं
-// var_dump($result);
+// Debugging aid (uncomment during development)
+// file_put_contents(__DIR__ . '/last_response.json', $response);
 
 if (isset($result['data']['payment_url'])) {
     // Redirect user to payment page
@@ -66,6 +82,7 @@ if (isset($result['data']['payment_url'])) {
     exit;
 } else {
     echo "Could not initiate payment.<br>";
+    echo "HTTP code: " . htmlspecialchars($http_code) . "<br>";
     echo "Response: " . htmlspecialchars($response);
 }
 ?>

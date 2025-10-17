@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Checkout - SMEPay Integration</title>
+  <script src="https://typof.co/smepay/checkout-v2.js"></script>
 </head>
 <body>
   <h2>Order Summary</h2>
@@ -10,10 +11,19 @@
   <p>Amount: ₹500</p>
 
   <form action="pay.php" method="POST">
+    <label>
+      Your name:<br>
+      <input type="text" name="customer_name" required>
+    </label>
+    <br>
+    <label>
+      Your email:<br>
+      <input type="email" name="customer_email" required>
+    </label>
     <input type="hidden" name="order_id" value="ORDER12345">
     <input type="hidden" name="amount" value="500">
+    <br><br>
     <button type="submit">Proceed to Pay</button>
   </form>
 </body>
-<script src="https://typof.co/smepay/checkout-v2.js"></script>
 </html>
