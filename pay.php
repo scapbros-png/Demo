@@ -4,7 +4,7 @@ ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
 // SMEPay API endpoint (as per documentation)
-$baseUrl = "https://api.smepay.in/v2";  // यह endpoint documentation के अनुसार हो सकता है
+$baseUrl = "https://typof.co/smepay/checkout-v2.js";  // यह endpoint documentation के अनुसार हो सकता है
 
 $api_key = "8bd912b6FA1569DE";
 $secret_key = "e01e3651278e9f4362b58bb6691c1f19ec3f7496e266c6e42c6651d4266732a6";
