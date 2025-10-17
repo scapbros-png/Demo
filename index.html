@@ -1,16 +1,17 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>My Shop - Checkout</title>
+  <meta charset="UTF-8">
+  <title>Checkout - SMEPay Integration</title>
 </head>
 <body>
   <h2>Order Summary</h2>
-  <p>Product: iPhone 15 Pro</p>
-  <p>Price: ₹120000</p>
+  <p>Product: Awesome Widget</p>
+  <p>Amount: ₹500</p>
 
   <form action="pay.php" method="POST">
-    <input type="hidden" name="amount" value="120000">
-    <input type="hidden" name="order_id" value="ORD12345">
+    <input type="hidden" name="order_id" value="ORDER12345">
+    <input type="hidden" name="amount" value="500">
     <button type="submit">Proceed to Pay</button>
   </form>
 </body>
