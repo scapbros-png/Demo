@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>My Shop - Checkout</title>
+</head>
+<body>
+  <h2>Order Summary</h2>
+  <p>Product: iPhone 15 Pro</p>
+  <p>Price: ₹120000</p>
+
+  <form action="pay.php" method="POST">
+    <input type="hidden" name="amount" value="120000">
+    <input type="hidden" name="order_id" value="ORD12345">
+    <button type="submit">Proceed to Pay</button>
+  </form>
+</body>
+</html>
